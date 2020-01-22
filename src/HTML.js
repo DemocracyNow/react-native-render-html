@@ -48,7 +48,8 @@ export default class HTML extends PureComponent {
         baseFontStyle: PropTypes.object.isRequired,
         textSelectable: PropTypes.bool,
         renderersProps: PropTypes.object,
-        allowFontScaling: PropTypes.bool
+        allowFontScaling: PropTypes.bool,
+        textBreakStrategy: PropTypes.oneOf(['balanced', 'highQuality', 'simple'])
     }
 
     static defaultProps = {
@@ -65,7 +66,8 @@ export default class HTML extends PureComponent {
         tagsStyles: {},
         classesStyles: {},
         textSelectable: false,
-        allowFontScaling: true
+        allowFontScaling: true,
+        textBreakStrategy: 'simple'
     }
 
     constructor (props) {
@@ -396,6 +398,7 @@ export default class HTML extends PureComponent {
             ignoredStyles,
             ptSize,
             tagsStyles,
+            textBreakStrategy,
             textSelectable
         } = props;
 
@@ -446,19 +449,20 @@ export default class HTML extends PureComponent {
             const classStyles = _getElementClassStyles(attribs, classesStyles);
             const textElement = data ?
                 <Text
-                  allowFontScaling={allowFontScaling}
-                  style={computeTextStyles(
-                      element,
-                      {
-                          defaultTextStyles: this.defaultTextStyles,
-                          tagsStyles,
-                          classesStyles,
-                          baseFontStyle,
-                          emSize,
-                          ptSize,
-                          ignoredStyles,
-                          allowedStyles
-                      })}
+                    allowFontScaling={allowFontScaling}
+                    style={computeTextStyles(
+                        element,
+                        {
+                            defaultTextStyles: this.defaultTextStyles,
+                            tagsStyles,
+                            classesStyles,
+                            baseFontStyle,
+                            emSize,
+                            ptSize,
+                            ignoredStyles,
+                            allowedStyles
+                        })}
+                    textBreakStrategy={textBreakStrategy}
                 >
                     { data }
                 </Text> :
@@ -476,6 +480,7 @@ export default class HTML extends PureComponent {
             if (Wrapper === Text) {
                 renderersProps.allowFontScaling = allowFontScaling;
                 renderersProps.selectable = textSelectable;
+                renderersProps.textBreakStrategy = textBreakStrategy;
             }
             return (
                 <Wrapper key={key} style={style} {...renderersProps}>
