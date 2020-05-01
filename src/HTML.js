@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import PropTypes from 'prop-types';
-import { View, Text, ViewPropTypes, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, TextInput, ViewPropTypes, ActivityIndicator, Dimensions, Platform } from 'react-native';
 import { cssStringToRNStyle, _getElementClassStyles, cssStringToObject, cssObjectToString, computeTextStyles } from './HTMLStyles';
 import {
     BLOCK_TAGS,
@@ -404,13 +404,13 @@ export default class HTML extends PureComponent {
 
         return RNElements && RNElements.length ? RNElements.map((element, index) => {
             const { attribs, data, tagName, parentTag, children, nodeIndex, wrapper } = element;
-            const Wrapper = wrapper === 'Text' ? Text : View;
+            const Wrapper = wrapper === 'Text' ? this.RNTextElement : View;
             const key = `${wrapper}-${parentIndex}-${nodeIndex}-${tagName}-${index}-${parentTag}`;
             const convertedCSSStyles =
                 attribs && attribs.style ?
                     cssStringToRNStyle(
                         attribs.style,
-                        Wrapper === Text ? STYLESETS.TEXT : STYLESETS.VIEW, // proper prop-types validation
+                        Wrapper === this.RNTextElement ? STYLESETS.TEXT : STYLESETS.VIEW, // proper prop-types validation
                         { parentTag: tagName, emSize, ptSize, ignoredStyles, allowedStyles }
                     ) :
                     {};
@@ -448,7 +448,7 @@ export default class HTML extends PureComponent {
 
             const classStyles = _getElementClassStyles(attribs, classesStyles);
             const textElement = data ?
-                <Text
+                <this.RNTextElement
                     allowFontScaling={allowFontScaling}
                     style={computeTextStyles(
                         element,
@@ -465,11 +465,11 @@ export default class HTML extends PureComponent {
                     textBreakStrategy={textBreakStrategy}
                 >
                     { data }
-                </Text> :
+                </this.RNTextElement> :
                 false;
 
             const style = [
-                (!tagsStyles || !tagsStyles[tagName]) ? (Wrapper === Text ? this.defaultTextStyles : this.defaultBlockStyles)[tagName] : undefined,
+                (!tagsStyles || !tagsStyles[tagName]) ? (Wrapper === this.RNTextElement ? this.defaultTextStyles : this.defaultBlockStyles)[tagName] : undefined,
                 tagsStyles ? tagsStyles[tagName] : undefined,
                 classStyles,
                 convertedCSSStyles
@@ -477,18 +477,23 @@ export default class HTML extends PureComponent {
             .filter((s) => s !== undefined);
 
             const renderersProps = {};
-            if (Wrapper === Text) {
+            if (Wrapper === this.RNTextElement) {
                 renderersProps.allowFontScaling = allowFontScaling;
                 renderersProps.selectable = textSelectable;
                 renderersProps.textBreakStrategy = textBreakStrategy;
             }
-            return (
-                <Wrapper key={key} style={style} {...renderersProps}>
-                    { textElement }
-                    { childElements }
-                </Wrapper>
-            );
+
+            return <Wrapper key={key} style={style} {...renderersProps}>
+                { textElement }
+                { childElements }
+            </Wrapper>;
         }) : false;
+    }
+
+    RNTextElement (props) {
+        return Platform.OS === 'ios' && props.selectable ?
+            <TextInput editable={false} multiline {...props}>{ props.children }</TextInput> :
+            <Text {...props}>{ props.children }</Text>;
     }
 
     render () {
